@@ -1,9 +1,11 @@
 import logging
 import configparser
 
+from sqlalchemy import create_engine
+
 from pyspark.sql import SparkSession
 from pyspark.sql.types import StructType, StringType, TimestampType, DoubleType
-from pyspark.sql.functions import col, split, regexp_replace
+from pyspark.sql.functions import split, regexp_replace, expr
 
 config = configparser.ConfigParser()
 config.read_file(open('./config/dl.cfg'))
@@ -42,10 +44,11 @@ def extract(spark, input_data):
     return df, count
 
 
-def transform(input_df):
+def transform(spark, input_df):
     """
     transform origin_coord and destination_coord to lat long as new columns
     enforces new schema
+    adds input filename as a column
     """
     df = input_df\
         .withColumn('origin', regexp_replace('origin_coord', 'POINT \(', '')) \
@@ -61,17 +64,21 @@ def transform(input_df):
         .withColumn('lon_destin', split(df['destination'], ' ').getItem(1).cast(DoubleType())) \
         .drop('origin').drop('destination')
 
+    spark.udf.register("filename_trim", lambda x: x.rsplit('/', 1)[-1])
+    df = df.withColumn('filename', expr('filename_trim(input_file_name())'))
+
     print(f"New schema:")
     df.printSchema()
+
     return df
 
 
-def load(spark, df, url, user, password, driver):
+def load_staging(spark, df, url, user, password, driver):
     """
-    loads transformed data into postgres
+    loads transformed data into postgres db
     query loaded data to make sure all rows were loaded
     """
-    table_name = "trips"
+    table_name = "trips_staged"
     df.write.format("jdbc") \
         .option("url", url) \
         .option("dbtable", table_name) \
@@ -95,28 +102,47 @@ def load(spark, df, url, user, password, driver):
     return count
 
 
+def upsert_fact(engine_string):
+    """
+    upsert fact spatial table with new data from staged table
+    """
+    engine = create_engine(engine_string)
+    connection = engine.connect()
+
+    my_query = 'SELECT * FROM trips_staged'
+    results = connection.execute(my_query).fetchmany(20)
+    print(results)
+
+
 def process_data():
     """
     creates spark session
-    configures input and output data paths
-    calls process_song_data and process_log_data
+    gets config properties
+    extracts data from csv
+    apply the transformations
+    load new data into postgres staging table
+    upsert new data into fact spatial table
     """
     spark = create_spark_session()
+
     input_data = config.get('LOCAL', 'INPUT_DATA')
     url = config.get('POSTGRES', 'URL')
     user = config.get('POSTGRES', 'USER')
     password = config.get('POSTGRES', 'PASS')
     driver = config.get('POSTGRES', 'DRIVER')
+    engine = config.get('POSTGRES', 'ENGINE')
 
     df, extracted_count = extract(spark, input_data)
-    df = transform(df)
-    loaded_count = load(spark, df, url, user, password, driver)
+    df = transform(spark, df)
+    loaded_count = load_staging(spark, df, url, user, password, driver)
 
     try:
         assert extracted_count == loaded_count
-        print('\033[1m', f"All data from file in {input_data} was loaded into Postgres")
+        print('\033[1m', f"All data from file {input_data} was loaded into staging table")
     except AssertionError:
         print(f"{input_data} was not correctly loaded into Postgres")
+
+    upsert_fact(engine)
 
 
 if __name__ == "__main__":
