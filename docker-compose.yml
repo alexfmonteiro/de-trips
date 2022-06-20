@@ -11,7 +11,7 @@ services:
       - 8888:8888
   db:
     container_name: postgres
-    image: postgis/postgis
+    image: docker.io/postgis/postgis@sha256:ec995cadee05ab51dcee4771c7781336fa49456c24b742ab9eb811f9bab195d6
     restart: always
     environment:
       POSTGRES_USER: postgres
