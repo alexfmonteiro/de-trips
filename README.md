@@ -1,55 +1,86 @@
 # Data Engineering Trips ETL and Analytics
 
+This solution builds an automatic process to ingest data on an on-demand basis. 
+
+The data to be ingested represents trips taken by different vehicles, and includes a city, a point of origin and a destination.
+[This CSV file](data/input/trips.csv) is a sample of the data this solution handles.
+
+This is what the data looks like:
+
+|region|origin_coord|destination_coord|datetime|datasource|
+|---|---|---|---|---|
+|Prague|POINT (14.4973794438195 50.00136875782316)|POINT (14.43109483523328 50.04052930943246)|2018-05-28 09:03:40|funny_car|
+|Turin|POINT (7.672837913286881 44.9957109242058)|POINT (7.720368637535126 45.06782385393849)|2018-05-21 02:54:04|baba_car|
+|Prague|POINT (14.32427345662177 50.00002074358429)|POINT (14.47767895969969 50.09339790740321)|2018-05-13 08:52:25|cheap_mobile|
+|Turin|POINT (7.541509189114433 45.09160503827746)|POINT (7.74528653441973 45.02628598341506)|2018-05-06 09:49:16|bad_diesel_vehicles|
+|Turin|POINT (7.614078119815749 45.13433106465422)|POINT (7.527497142312585 45.03335051325654)|2018-05-23 12:45:54|pt_search_app|
+
+### Tools and technologies used
+ - Apache Spark version 3.2.1
+ - Jupyter Notebook Python
+ - Postgres 13 with PostGIS
+
+The environment with all its dependencies are containerized and were built using the following Docker images:
+ - [postgis/postgis](https://registry.hub.docker.com/r/postgis/postgis)
+ - [jupyter/pyspark-notebook](https://hub.docker.com/r/jupyter/pyspark-notebook)
+
+### How to run
+1. Clone this repo:
+```
+git clone https://github.com/alexfmonteiro/de-trips.git
+cd de-trips
+```
+2. Run the following command to build and run the containers:
+
+```
+docker-compose up --build
+``` 
+or 
+```
+make start
+```
+
+3. Run the ETL job to ingest the sample data:
+
+```
+docker exec spark spark-submit ./jobs/trips_etl.py
+``` 
+or 
+```
+make run
+```
 
 
-## Description
+Alternatively, if you want to run the ETL job to ingest other files (e.g. `./data/input/trips_2.csv`), pass the file to tha application name like this:
+```
+docker exec spark spark-submit ./jobs/trips_etl.py ./data/input/trips_2.csv
+```
 
-This challenge will evaluate your proficiency in Data Engineering, and your knowledge in
-Software development as well.
+### How it works
+TODO: write about the etl steps, flow and key decisions
 
-## Assignment
 
-Your task is to build an automatic process to ingest data on an on-demand basis. The data
-represents trips taken by different vehicles, and include a city, a point of origin and a destination.
-This CSV file gives you a small sample of the data your solution will have to handle. We would
-like to have some visual reports of this data, but in order to do that, we need the following
-features.
+### Main features
+ - an automated process to ingest CSV files and store the data in a spatial SQL database (Postgis)
+ - data cleaning step to detect and drop duplicates in the file being ingested
+ - idempotency: the same data ingested will produce the outcome in the final trips table
+ - data quality steps to enrich the data being ingested:
+   - enforce data types
+   - add input_file_name column for upserting logic
+   - add time of the day column for partitioning and improved performance
+ - high scalability due to Apache Spark parallel processing and containerized architecture
+ - report providing analytics like:
+   - daily/monthly/weekly average number of trips for a region
+   - latest datasource from the two most commonly appearing regions
+   - regions where a specific datasource appeared in
 
-We do not need a graphical interface. Your application should preferably be a REST API, or a
-console application.
+### Further discussion about Usability and Scalability
+ - When running the ETL job in the console, it is possible to follow through the logs the current status of the ingestion processing in all the steps. More details about the pipeline steps and the data being ingested could be achieved with Apache Airflow orchestration features.
+ - Running locally with the selected containers architecture, the ingestion of a CSV file with 10 million lines took around 13 minutes. If more performance is needed, a bigger Spark cluster would need to be set, locally or in a cloud provider. 
+ - It's important to note that the current solution already supports parallel processing since it's using Apache Spark.
 
-## Mandatory Features
+### Deploying in a cloud provider
 
- - There must be an automated process to ingest and store the data.
- - Trips with similar origin, destination, and time of day should be grouped together.
- - Develop a way to obtain the weekly average number of trips for an area, defined by a
-bounding box (given by coordinates) or by a region.
- - Develop a way to inform the user about the status of the data ingestion without using a
-polling solution.
- - The solution should be scalable to 100 million entries. It is encouraged to simplify the
-data by a data model. Please add proof that the solution is scalable.
- - Use a SQL database.
-
-## Bonus features
-
- - Containerize your solution.
- - Sketch up how you would set up the application using any cloud provider (AWS, Google
+ - TODO: write about Amazon EMR or Glue and Airflow
+ - TODO: Sketch up how you would set up the application using any cloud provider (AWS, Google
 Cloud, etc).
- - Include a .sql file with queries to answer these questions:
- - From the two most commonly appearing regions, which is the latest datasource?
- - What regions has the "cheap_mobile" datasource appeared in?
-
-## Deliverables
-Your project should be stored in a public GitHub repository. When you are done, send us the link
-to your repo.
-It’s not necessary to host this application anywhere (although you can if you like). Just make
-sure your repo has a README.md which contains any instructions we might need for running
-your project.
-
-## Observations/Recommendation
- - If you will integrate your solution with any cloud platform, you must provide an account
-(user/password) to us to test it.
- - Please detail your code so that we can understand your reasoning and its use regardless
-of platform expertise.
- - We recommend recording a video explaining how it works and steps of execution.
-
