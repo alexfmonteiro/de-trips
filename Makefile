@@ -1,15 +1,13 @@
-all: build start
-
 default: start
 
 build:
 	docker-compose build
 
 start:
-	docker-compose up
+	docker-compose up --build
 
 reset:
 	docker-compose down
 
 run:
-	docker exec spark spark-submit /home/jovyan/tests/test-spark.py
+	docker exec spark spark-submit ./jobs/trips_etl.py
