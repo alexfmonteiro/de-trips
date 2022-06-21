@@ -56,9 +56,13 @@ Alternatively, if you want to run the ETL job to ingest other files (e.g. `./dat
 docker exec spark spark-submit ./jobs/trips_etl.py ./data/input/trips_2.csv
 ```
 
-### How it works
-TODO: write about the etl steps, flow and key decisions
+### How to run Jupyter Notebooks
+After starting the docker images (`docker-compose up`) you will see some similar logs like these in the console:
 
+![spark container logs](./img/jupyter_logs.png "spark container logs")
+
+Click in one of the links like this one: `http://127.0.0.1:8888/lab?token=88de878e1848adc5ea95baea757b677ffb0593f50e9100aa`
+Now you can run the [reports notebook](./notebooks/reports.ipynb) or create new ones.
 
 ### Main features
  - an automated process to ingest CSV files and store the data in a spatial SQL database (Postgis)
@@ -69,10 +73,34 @@ TODO: write about the etl steps, flow and key decisions
    - add input_file_name column for upserting logic
    - add time of the day column for partitioning and improved performance
  - high scalability due to Apache Spark parallel processing and containerized architecture
- - report providing analytics like:
+ - [reports notebook](./notebooks/reports.ipynb) providing analytics like:
    - daily/monthly/weekly average number of trips for a region
    - latest datasource from the two most commonly appearing regions
    - regions where a specific datasource appeared in
+   - queries with bounding boxes
+   - trips plotted
+
+### How it works and main assumptions
+The `spark` docker image runs an Apache Spark cluster, and it is ready to run a pyspark job.
+
+When running the job through the `make run`command, it triggers the spark-submit cli to execute the spark job `trips_etl.py` in the `jobs` directory.
+
+The trips_etl.py job will then ingest the csv file sent as an argument or configured in the [cfg file](./config/dl.cfg). These are the main processing steps:
+
+1. Extract: CSV file is loaded in a spark dataframe and the Data Types for the entity `trips` are enforced;
+2. Transform: 
+   1. Metadata column added with the input file name;
+   2. Duplicates are discarded;
+   3. Coordinates strings are split into separate lat/long origin/destination columns;
+   4. Data types for new columns are enforced;
+3. Load transformed data to Postgres staging table
+4. Data from staging table is upserted into a Postgres Spatial table, with support to geographical coordinates
+
+Checks are performed in all the steps to make sure all rows from the new file were correctly ingested, and all the processing steps are logged in the console.
+
+In step 4, the choice to use upsert logic is to make the pipeline prepared to ingest new recurring files on a schedule. This processing step runs inside Postgres instance using SQL only command.
+
+The input_file_name column was added to make each ETL Job run idempotent.
 
 ### Further discussion about Usability and Scalability
  - When running the ETL job in the console, it is possible to follow through the logs the current status of the ingestion processing in all the steps. More details about the pipeline steps and the data being ingested could be achieved with Apache Airflow orchestration features.
@@ -81,6 +109,16 @@ TODO: write about the etl steps, flow and key decisions
 
 ### Deploying in a cloud provider
 
- - TODO: write about Amazon EMR or Glue and Airflow
- - TODO: Sketch up how you would set up the application using any cloud provider (AWS, Google
-Cloud, etc).
+In a scenario where scalability is needed, an alternative would be to deploy this solution to the cloud. I would set up the following architecture on AWS:
+
+![AWS Architecture](./img/etl_processing_on_aws.png "ETL Processing on AWS")
+
+Airflow would orchestrate the whole data pipeline workflow by:
+1. monitoring the landing bucket in S3 for new file drops
+2. triggering the Spark job in AWS EMR cluster with the new file to be ingested
+3. each Airflow task would have retry mechanisms in place to make the data pipeline more robust
+4. notifications via email can be set for failed tasks, or when the pipeline is completed successfully (represented by the email icon). Notification messages could also be sent via slack, if needed.
+
+By design, each Airflow Dag run would ingest a single file. Multiple dag runs would be triggered for each new file for increased parallel processing.
+
+The data in Postgres DB can be consumed by any Analytics/Dashboards tools like Tableau, Power BI or Amazon Quicksight.
