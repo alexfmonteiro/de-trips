@@ -104,10 +104,10 @@ The input_file_name column was added to make each ETL Job run idempotent.
 
 ### Further discussion about Usability and Scalability
  - When running the ETL job in the console, it is possible to follow through the logs the current status of the ingestion processing in all the steps. More details about the pipeline steps and the data being ingested could be achieved with Apache Airflow orchestration features.
- - Running locally with the selected containers architecture, the ingestion of a CSV file with 10 million lines took around 13 minutes. If more performance is needed, a bigger Spark cluster would need to be set, locally or in a cloud provider. 
+ - Running locally with the selected containers' architecture, the ingestion of a CSV file with 10 million lines took around 13 minutes. If more performance is needed, a bigger Spark cluster would need to be set, locally or in a cloud provider. 
  - It's important to note that the current solution already supports parallel processing since it's using Apache Spark.
 
-### Deploying in a cloud provider
+### Deploying the solution in a cloud provider
 
 In a scenario where scalability is needed, an alternative would be to deploy this solution to the cloud. I would set up the following architecture on AWS:
 
