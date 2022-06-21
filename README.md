@@ -106,6 +106,8 @@ In step 4, the choice to use upsert logic is to make the pipeline prepared to in
 
 The input_file_name column was added so everytime the ETL Job runs, the result is the same for the same data ingested.
 
+Also, the final table `trips` with geographic columns was partitioned by `time_of_day` (hour) and indexed by the two coordinate columns. This decision was made to **group similar data** for improved performance.
+
 ## Further discussion about Usability and Scalability
  - When running the ETL job in the console, it is possible to follow through the logs the current status of the ingestion processing in all the steps. More details about the pipeline steps and the data being ingested could be achieved with Apache Airflow orchestration features.
  - Running locally with the selected containers' architecture, the ingestion of a CSV file with 10 million lines took around 13 minutes. If more performance is needed, a bigger Spark cluster would need to be set, locally or in a cloud provider. 
