@@ -64,7 +64,7 @@ After starting the docker images (`docker-compose up`) you will see some similar
 Click in one of the links like this one: `http://127.0.0.1:8888/lab?token=88de878e1848adc5ea95baea757b677ffb0593f50e9100aa`
 Now you can run the [reports notebook](./notebooks/reports.ipynb) or create new ones.
 
-Note that the reports notebook will be able to run correctly only after at least one file is ingested by the data pipeline (after running the `make run`command at least once).
+Note that the reports notebook will be able to run correctly only after at least one file is ingested by the data pipeline (after running the `make run` command at least once).
 
 
 ## Main features
@@ -86,7 +86,7 @@ Note that the reports notebook will be able to run correctly only after at least
 ## How it works and main assumptions
 The `spark` docker image runs an Apache Spark cluster, and it is ready to run a pyspark job.
 
-When running the job through the `make run`command, it triggers the spark-submit cli to execute the spark job `trips_etl.py` in the `jobs` directory.
+When running the job through the `make run` command, it triggers the spark-submit cli to execute the spark job `trips_etl.py` in the `jobs` directory.
 
 The trips_etl.py job will then ingest the csv file sent as an argument or configured in the [cfg file](./config/dl.cfg). These are the main processing steps:
 
