@@ -93,14 +93,15 @@ The trips_etl.py job will then ingest the csv file sent as an argument or config
    2. Duplicates are discarded;
    3. Coordinates strings are split into separate lat/long origin/destination columns;
    4. Data types for new columns are enforced;
-3. Load transformed data to Postgres staging table
-4. Data from staging table is upserted into a Postgres Spatial table, with support to geographical coordinates
+3. Load transformed data to Postgres staging table;
+4. Data from staging table is upserted into a Postgres Spatial table, with support to geographical coordinates;
+5. If all the data was correctly ingested, a file with a timestamp is written in the output folder, configured in the [cfg file](./config/dl.cfg).
 
 Checks are performed in all the steps to make sure all rows from the new file were correctly ingested, and all the processing steps are logged in the console.
 
 In step 4, the choice to use upsert logic is to make the pipeline prepared to ingest new recurring files on a schedule. This processing step runs inside Postgres instance using SQL only command.
 
-The input_file_name column was added to make each ETL Job run idempotent.
+The input_file_name column was added so everytime the ETL Job runs, the result is the same for the same data ingested.
 
 ### Further discussion about Usability and Scalability
  - When running the ETL job in the console, it is possible to follow through the logs the current status of the ingestion processing in all the steps. More details about the pipeline steps and the data being ingested could be achieved with Apache Airflow orchestration features.
