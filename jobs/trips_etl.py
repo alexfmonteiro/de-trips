@@ -1,5 +1,6 @@
 import configparser
 import sys
+import time
 
 from sqlalchemy import create_engine
 
@@ -170,6 +171,7 @@ def process_data():
     else:
         input_data = config.get('LOCAL', 'INPUT_DATA')
 
+    output_data = config.get('LOCAL', 'OUTPUT_DATA')
     url = config.get('POSTGRES', 'URL')
     user = config.get('POSTGRES', 'USER')
     password = config.get('POSTGRES', 'PASS')
@@ -187,7 +189,10 @@ def process_data():
 
     upserts_count = upsert_spatial(engine, input_data)
 
-    check_counts(extracted_count, upserts_count+dup_count, 'upserting', input_data)
+    if check_counts(extracted_count, upserts_count+dup_count, 'upserting', input_data):
+        ts = time.strftime("%Y%m%d-%H%M%S")
+        file = f"{output_data}.trips_processed_{ts}"
+        open(file, 'w').close()
 
     print("ETL Processing finished. Check the report notebook for analytics.")
 
