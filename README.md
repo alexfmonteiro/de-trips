@@ -27,8 +27,7 @@ The environment with all its dependencies are containerized and were built using
 ### How to run
 1. Clone this repo:
 ```
-git clone https://github.com/alexfmonteiro/de-trips.git
-cd de-trips
+git clone https://github.com/alexfmonteiro/de-trips.git && cd de-trips
 ```
 2. Run the following command to build and run the containers:
 
