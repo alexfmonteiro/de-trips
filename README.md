@@ -33,6 +33,8 @@ The environment with all its dependencies are containerized and were built using
  - git
  - docker
  - docker-compose
+ 
+ The `make` commands can be ignored if the application is not executed in linux/unix. 
 
 
 1. Clone this repo:
