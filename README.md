@@ -20,12 +20,21 @@ This is what the data looks like:
  - Apache Spark version 3.2.1
  - Jupyter Notebook Python
  - Postgres 13 with PostGIS
+ - Docker Desktop 4.5.0
+ - Docker Compose 1.29.2
 
 The environment with all its dependencies are containerized and were built using the following Docker images:
  - [postgis/postgis](https://registry.hub.docker.com/r/postgis/postgis)
  - [jupyter/pyspark-notebook](https://hub.docker.com/r/jupyter/pyspark-notebook)
 
 ## How to run
+
+:memo: **Note:** Before moving forward, make sure that the following applications are in the PATH and can be executed from any directory via command-line:
+ - git
+ - docker
+ - docker-compose
+
+
 1. Clone this repo:
 ```
 git clone https://github.com/alexfmonteiro/de-trips.git && cd de-trips
