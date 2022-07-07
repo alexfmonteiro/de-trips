@@ -73,6 +73,7 @@ After starting the docker images (`docker-compose up`) you will see some similar
 ![spark container logs](./img/jupyter_logs.png "spark container logs")
 
 Click in one of the links like this one: `http://127.0.0.1:8888/lab?token=88de878e1848adc5ea95baea757b677ffb0593f50e9100aa`
+
 Now you can run the [reports notebook](./notebooks/reports.ipynb) or create new ones.
 
 Note that the reports notebook will be able to run correctly only after at least one file is ingested by the data pipeline (after running the `make run` command at least once).
